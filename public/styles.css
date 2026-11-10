@@ -17,6 +17,7 @@
   --gold-1: #ffd60a;
   --gold-2: #ff9f0a;
   --bar: rgba(249, 249, 249, .86);
+  --bar-solid: #f7f7f7;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   color-scheme: light;
@@ -36,6 +37,7 @@
     --green: #30d158;
     --red: #ff453a;
     --bar: rgba(22, 22, 24, .86);
+    --bar-solid: #161618;
     color-scheme: dark;
   }
 }
@@ -337,3 +339,11 @@ td.skip { color: var(--label-3); text-decoration: line-through; }
 @media (min-width: 700px) {
   .sheet { bottom: 50%; transform: translateY(50%); border-radius: 1rem; animation: fade .2s; max-height: 85%; }
 }
+
+/* iOS 26 short-page workaround: the strip below the page shows the root background,
+   so colour it like the tab bar and drop the bar's own home-indicator padding. */
+html.gap:has(#app:not([hidden])) { background: var(--bar-solid); }
+html.gap .bottom { background: var(--bar-solid); -webkit-backdrop-filter: none; backdrop-filter: none; padding-bottom: .1rem; }
+html.gap .toast { bottom: 4.6rem; }
+html.gap .sheet { padding-bottom: 1.25rem; }
+html.gap.sheet-open:has(#app:not([hidden])) { background: var(--bg); }

@@ -423,6 +423,7 @@
     $('#sheetBody').innerHTML = html;
     $('#scrim').hidden = false;
     $('#sheet').hidden = false;
+    document.documentElement.classList.add('sheet-open');
     $('#sheet').scrollTop = 0;
     sheetOnClose = onClose || null;
   }
@@ -430,6 +431,7 @@
     if ($('#sheet').hidden) return;
     $('#scrim').hidden = true;
     $('#sheet').hidden = true;
+    document.documentElement.classList.remove('sheet-open');
     $('#sheetBody').innerHTML = '';
     const f = sheetOnClose;
     sheetOnClose = null;

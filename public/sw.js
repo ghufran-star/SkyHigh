@@ -1,5 +1,5 @@
 // Network-first app shell so updates land immediately, with an offline fallback.
-const CACHE = 'skyhigh-v3';
+const CACHE = 'skyhigh-v4';
 const SHELL = ['/', '/index.html', '/styles.css', '/app.js', '/icon.svg', '/manifest.webmanifest', '/icon-192.png'];
 
 self.addEventListener('install', (e) => {
