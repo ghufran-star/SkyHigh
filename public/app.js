@@ -24,6 +24,10 @@
   const POLL_MS = 7000;
 
   const I = {
+    chev: '<svg class="chev" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg>',
+    check: '<svg class="check" viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg>',
+    phoneFill: '<svg class="f" viewBox="0 0 24 24"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>',
+    chatFill: '<svg class="f" viewBox="0 0 24 24"><path d="M12 2.5C6.5 2.5 2 6.6 2 11.7c0 2.7 1.3 5.2 3.4 6.9L4.6 22l3.8-2a11 11 0 0 0 3.6.6c5.5 0 10-4.1 10-9.2S17.5 2.5 12 2.5z"/></svg>',
     phone: '<svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/></svg>',
     users: '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
     search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
@@ -259,6 +263,8 @@
     dot.classList.toggle('offline', !S.online);
     dot.classList.toggle('pending', S.online && S.outbox.length > 0);
     dot.title = !S.online ? `Offline — ${S.outbox.length} change(s) waiting` : S.outbox.length ? 'Saving…' : 'All changes synced';
+    const t = $('#syncText');
+    if (t) t.textContent = !S.online ? 'Offline' : S.outbox.length ? 'Saving…' : 'Synced';
   }
 
   /* ------------------------------------------------------------------ */
@@ -354,47 +360,54 @@
       .join('');
   }
 
+  const initials = (c) => {
+    const n = (c.owner || c.agency || '?').trim().split(/\s+/);
+    return esc(((n[0] || '')[0] || '?') + ((n[1] || '')[0] || '')).toUpperCase();
+  };
+
   function cardHtml(c) {
     const st = ST[c.status] || ST.new;
     const meta = [];
-    if (c.addedBy) meta.push(`Added by ${esc(c.addedBy)} · ${ago(c.createdAt)}`);
-    else meta.push(`Added ${ago(c.createdAt)}`);
-    if (c.callCount) meta.push(`📞 ${c.callCount}× · last ${ago(c.lastCalledAt)}`);
-    if (c.updatedBy && c.updatedAt - c.createdAt > 2000) meta.push(`Updated by ${esc(c.updatedBy)} ${ago(c.updatedAt)}`);
-    return `<article class="card" data-id="${esc(c.id)}">
-      <div class="card-main" data-act="open">
-        <div class="rank ${c.rank && c.rank <= 3 ? 'top' : ''}">${c.rank ? '#' + c.rank : '—'}</div>
-        <div class="who">
-          <h3>${hl(c.agency || c.owner || 'Unnamed')}</h3>
-          <p>${c.agency && c.owner ? hl(c.owner) + ' · ' : ''}<span class="ph">${hl(fmtPhone(c.phone))}</span></p>
+    if (c.callCount) meta.push(`${c.callCount} call${c.callCount === 1 ? '' : 's'} · ${ago(c.lastCalledAt)}`);
+    else meta.push(`${c.addedBy ? esc(c.addedBy) + ' · ' : ''}${ago(c.createdAt)}`);
+    const owner = c.agency && c.owner ? `<div class="row-sub">${hl(c.owner)}</div>` : '';
+    return `<article class="row" data-id="${esc(c.id)}">
+      <div class="row-main" data-act="open">
+        <div class="avatar ${c.rank && c.rank <= 3 ? 'gold' : ''}">${c.rank ? '<span><small>#</small>' + c.rank + '</span>' : initials(c)}</div>
+        <div class="row-text">
+          <div class="row-title">${hl(c.agency || c.owner || 'Unnamed')}</div>
+          ${owner}<div class="row-phone ph">${hl(fmtPhone(c.phone))}</div>
+          <div class="row-foot">
+            <button class="pill" data-act="status" style="--c:${st.c}">${esc(st.label)}${I.chev}</button>
+            <span class="row-meta">${meta.join(' · ')}</span>
+          </div>
+          ${c.notes ? `<div class="row-note">${hl(c.notes.split('\n').slice(-1)[0])}</div>` : ''}
         </div>
-        <button class="pill" data-act="status" style="--c:${st.c}" aria-label="Change status">${esc(st.label)}</button>
       </div>
-      ${c.notes ? `<div class="note">${hl(c.notes)}</div>` : ''}
-      <div class="actions">
-        <a class="act call" href="${esc(telHref(c.phone))}" data-act="call">${I.phone}Call</a>
-        <a class="act wa" href="${esc(waHref(c))}" data-act="wa" target="_blank" rel="noopener">${I.chat}WhatsApp</a>
+      <div class="row-acts">
+        <a class="circle call" href="${esc(telHref(c.phone))}" data-act="call" aria-label="Call">${I.phoneFill}</a>
+        <a class="circle wa" href="${esc(waHref(c))}" data-act="wa" target="_blank" rel="noopener" aria-label="WhatsApp">${I.chatFill}</a>
       </div>
-      <div class="meta">${meta.map((m) => `<span>${m}</span>`).join('')}</div>
     </article>`;
   }
 
   function renderList() {
     const arr = filtered();
     const list = $('#list');
+    $('#bigCount').textContent = S.contacts.size ? `${S.contacts.size} lead${S.contacts.size === 1 ? '' : 's'}` : '';
     if (!arr.length) {
       const none = !S.contacts.size;
       list.innerHTML = `<div class="empty">
         <div class="empty-ico">${none ? I.users : I.search}</div>
-        <h2>${none ? 'No leads yet' : 'Nothing matches'}</h2>
-        <p>${none ? 'Add a contact or bulk-import a CSV / Excel sheet to get started.' : 'Try another search or status filter.'}</p>
-        ${none ? '<button class="btn primary" data-nav="add">Add first contact</button> <button class="btn" data-nav="import">Import a sheet</button>' : '<button class="btn" data-clear>Clear filters</button>'}
+        <h2>${none ? 'No Leads Yet' : 'No Results'}</h2>
+        <p>${none ? 'Add a contact, or import an Excel or CSV sheet to fill the list in one go.' : 'Try a different search or status.'}</p>
+        ${none ? '<div class="empty-btns"><button class="btn primary" data-nav="add">Add Contact</button><button class="btn tinted" data-nav="import">Import Sheet</button></div>' : '<button class="btn tinted" data-clear>Clear Filters</button>'}
       </div>`;
       $('#more').textContent = '';
       return;
     }
     list.innerHTML = arr.slice(0, S.shown).map(cardHtml).join('');
-    $('#more').textContent = arr.length > S.shown ? `Showing ${S.shown} of ${arr.length} — scroll for more` : `${arr.length} lead${arr.length === 1 ? '' : 's'}`;
+    $('#more').textContent = arr.length > S.shown ? `Showing ${S.shown} of ${arr.length}` : `${arr.length} lead${arr.length === 1 ? '' : 's'}`;
   }
 
   function render() {
@@ -414,6 +427,7 @@
     sheetOnClose = onClose || null;
   }
   function closeSheet() {
+    if ($('#sheet').hidden) return;
     $('#scrim').hidden = true;
     $('#sheet').hidden = true;
     $('#sheetBody').innerHTML = '';
@@ -421,29 +435,32 @@
     sheetOnClose = null;
     if (f) f();
   }
+  const sheetNav = (title, left = 'Cancel', right = '', rightAttr = '') =>
+    `<div class="sheet-nav"><button type="button" class="nav-btn" data-close>${left}</button>
+      <div class="sheet-title">${title}</div>
+      ${right ? `<button type="button" class="nav-btn strong" ${rightAttr}>${right}</button>` : '<span class="nav-btn"></span>'}</div>`;
 
-  function formHtml(c = {}) {
-    return `<div class="form">
-      <div class="field"><label for="f-agency">Agency name</label>
-        <input id="f-agency" name="agency" value="${esc(c.agency)}" placeholder="e.g. Allsopp &amp; Allsopp" autocomplete="off" autocapitalize="words"></div>
-      <div class="row2">
-        <div class="field"><label for="f-owner">Owner name</label>
-          <input id="f-owner" name="owner" value="${esc(c.owner)}" placeholder="e.g. Ahmed Khan" autocomplete="off" autocapitalize="words"></div>
-        <div class="field"><label for="f-rank">Rank</label>
-          <input id="f-rank" name="rank" value="${esc(c.rank || '')}" placeholder="#" inputmode="numeric" autocomplete="off"></div>
+  function statusSelect(current) {
+    return `<select name="status" class="cell-select">${STATUSES.map((s) => `<option value="${s.key}" ${s.key === current ? 'selected' : ''}>${esc(s.label)}</option>`).join('')}</select>`;
+  }
+
+  function formHtml(c = {}, withStatus) {
+    return `<div class="group">
+        <label class="cell"><span>Agency</span><input name="agency" value="${esc(c.agency)}" placeholder="Agency name" autocomplete="off" autocapitalize="words"></label>
+        <label class="cell"><span>Owner</span><input name="owner" value="${esc(c.owner)}" placeholder="Owner name" autocomplete="off" autocapitalize="words"></label>
+        <label class="cell"><span>Rank</span><input name="rank" value="${esc(c.rank || '')}" placeholder="e.g. 1" inputmode="numeric" autocomplete="off"></label>
+        <label class="cell"><span>Phone</span><input id="f-phone" name="phone" type="tel" value="${esc(c.phone ? fmtPhone(c.phone) : '')}" placeholder="050 123 4567" autocomplete="off" inputmode="tel"></label>
+        ${withStatus ? `<label class="cell"><span>Status</span>${statusSelect(c.status || 'new')}</label>` : ''}
       </div>
-      <div class="field"><label for="f-phone">Phone number</label>
-        <input id="f-phone" name="phone" type="tel" value="${esc(c.phone || '')}" placeholder="050 123 4567 or +971…" autocomplete="off" inputmode="tel" required>
-        <div id="dupWarn"></div></div>
-      <div class="field"><label for="f-notes">Notes</label>
-        <textarea id="f-notes" name="notes" placeholder="Anything useful for the call…">${esc(c.notes)}</textarea></div>
-    </div>`;
+      <div id="dupWarn" class="group-foot"></div>
+      <div class="group-head">Notes</div>
+      <div class="group"><textarea name="notes" class="cell-area" placeholder="Anything useful for the call…">${esc(c.notes)}</textarea></div>`;
   }
 
   function readForm() {
     const v = (n) => $(`#sheetBody [name="${n}"]`)?.value.trim() || '';
     const r = parseInt(v('rank').replace(/\D/g, ''), 10);
-    return { agency: v('agency'), owner: v('owner'), rank: r > 0 ? r : null, phone: normPhone(v('phone')), rawPhone: v('phone'), notes: v('notes') };
+    return { agency: v('agency'), owner: v('owner'), rank: r > 0 ? r : null, phone: normPhone(v('phone')), notes: v('notes'), status: v('status') || 'new' };
   }
 
   function wireDupCheck(selfId) {
@@ -452,8 +469,8 @@
       const p = normPhone(input.value);
       const hit = p && p.replace(/\D/g, '').length >= 8 ? phoneIndex().get(p) : null;
       $('#dupWarn').innerHTML = hit && hit.id !== selfId
-        ? `<div class="warn">Already saved as <b>${esc(hit.agency || hit.owner || hit.phone)}</b> (${esc(ST[hit.status]?.label)}). <button type="button" data-open="${esc(hit.id)}">Open it</button></div>`
-        : p && input.value.trim() ? `<div class="hint">Saved as ${esc(fmtPhone(p))}</div>` : '';
+        ? `<span class="warn">Already saved as <b>${esc(hit.agency || hit.owner || hit.phone)}</b> · ${esc(ST[hit.status]?.label)}. <button type="button" data-open="${esc(hit.id)}">Open</button></span>`
+        : p && input.value.trim() !== fmtPhone(p) ? `Will be saved as ${esc(fmtPhone(p))}` : '';
       return hit && hit.id !== selfId ? hit : null;
     };
     input.addEventListener('input', check);
@@ -462,63 +479,67 @@
   }
 
   function openAdd() {
-    openSheet(`<h2>New contact</h2><p class="sub">Saved instantly and synced to everyone.</p>
-      ${formHtml()}
-      <div class="field" style="margin-top:.8rem"><label>Status</label>${statusGridHtml('new', 'pick')}</div>
-      <div class="btn-row" style="margin-top:1rem">
-        <button class="btn" data-save="again">Save &amp; add another</button>
-        <button class="btn primary" data-save="close">Save</button>
+    openSheet(`${sheetNav('New Contact', 'Cancel', 'Add', 'data-save="close"')}
+      <div class="sheet-pad">
+        ${formHtml({}, true)}
+        <button class="btn tinted block" data-save="again">Save &amp; Add Another</button>
+        <p class="group-foot center">Synced instantly to everyone using Sky High.</p>
       </div>`);
-    let picked = 'new';
     const dup = wireDupCheck(null);
     $('#sheetBody').addEventListener('click', (e) => {
-      const p = e.target.closest('[data-pick]');
-      if (p) { picked = p.dataset.pick; $$('#sheetBody .status-opt').forEach((b) => b.classList.toggle('on', b === p)); return; }
+      if (e.target.closest('[data-close]')) return closeSheet();
       const s = e.target.closest('[data-save]');
       if (!s) return;
       const f = readForm();
       if (!f.phone || f.phone.replace(/\D/g, '').length < 6) { toast('Enter a valid phone number'); $('#f-phone').focus(); return; }
       if (dup()) { toast('That number is already saved'); return; }
-      addContact({ ...f, status: picked });
+      addContact(f);
       if (S.view !== 'leads') go('leads');
       render();
+      const name = f.agency || f.owner || fmtPhone(f.phone);
       if (s.dataset.save === 'again') {
-        toast(`Saved ${f.agency || f.owner || fmtPhone(f.phone)}`);
+        toast(`Saved ${name}`);
         ['owner', 'phone', 'notes'].forEach((n) => ($(`#sheetBody [name="${n}"]`).value = ''));
-        const rk = $('#f-rank'); if (rk.value && /^\d+$/.test(rk.value)) rk.value = String(+rk.value + 1);
+        const rk = $('#sheetBody [name="rank"]');
+        if (/^\d+$/.test(rk.value)) rk.value = String(+rk.value + 1);
         $('#dupWarn').innerHTML = '';
-        $('#f-owner').focus();
+        $('#sheetBody [name="owner"]').focus();
       } else {
         closeSheet();
-        toast(`Saved ${f.agency || f.owner || fmtPhone(f.phone)}`);
+        toast(`Saved ${name}`);
       }
     });
-    setTimeout(() => $('#f-agency')?.focus(), 250);
+    setTimeout(() => $('#sheetBody [name="agency"]')?.focus(), 300);
   }
 
-  function statusGridHtml(current, attr = 'set') {
-    return `<div class="status-grid">${STATUSES.map((s) =>
-      `<button type="button" class="status-opt ${s.key === current ? 'on' : ''}" data-${attr}="${s.key}" style="--c:${s.c}">${esc(s.label)}</button>`).join('')}</div>`;
+  function statusListHtml(current) {
+    return `<div class="group">${STATUSES.map((s) =>
+      `<button type="button" class="cell status-cell ${s.key === current ? 'on' : ''}" data-set="${s.key}" style="--c:${s.c}">
+        <i class="sdot"></i><span>${esc(s.label)}</span>${s.key === current ? I.check : ''}</button>`).join('')}</div>`;
   }
 
   function openStatus(id, title) {
     const c = S.contacts.get(id);
     if (!c) return;
-    openSheet(`<h2>${esc(title || 'Update status')}</h2>
-      <p class="sub">${esc(c.agency || '')}${c.agency && c.owner ? ' · ' : ''}${esc(c.owner || '')} · ${esc(fmtPhone(c.phone))}</p>
-      ${statusGridHtml(c.status)}
-      <div class="field" style="margin-top:1rem"><label for="q-note">Add a note (optional)</label>
-        <textarea id="q-note" placeholder="e.g. Call back Thursday 4pm, interested in waterfront…" style="min-height:4rem"></textarea></div>
-      <button class="btn primary block" data-done style="margin-top:.8rem">Done</button>`);
+    openSheet(`${sheetNav('Status', 'Cancel', 'Done', 'data-done')}
+      <div class="sheet-pad">
+        <div class="status-head">
+          <div class="row-title">${esc(title || c.agency || c.owner || 'Lead')}</div>
+          <div class="row-sub">${esc([c.agency && title ? c.agency : '', c.owner && !title ? c.owner : '', fmtPhone(c.phone)].filter(Boolean).join(' · '))}</div>
+        </div>
+        ${statusListHtml(c.status)}
+        <div class="group-head">Add a note</div>
+        <div class="group"><textarea id="q-note" class="cell-area" placeholder="e.g. Call back Thursday 4pm" style="min-height:4.5rem"></textarea></div>
+      </div>`);
     const commit = () => {
       const note = $('#q-note')?.value.trim();
-      if (note) {
-        const cur = S.contacts.get(id);
-        const line = `${new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}: ${note}`;
-        patchContact(id, { notes: cur.notes ? cur.notes + '\n' + line : line });
-      }
+      if (!note) return;
+      const cur = S.contacts.get(id);
+      const line = `${new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}: ${note}`;
+      patchContact(id, { notes: cur.notes ? cur.notes + '\n' + line : line });
     };
     $('#sheetBody').addEventListener('click', (e) => {
+      if (e.target.closest('[data-close]')) return closeSheet();
       const b = e.target.closest('[data-set]');
       if (b) { commit(); closeSheet(); setStatus(id, b.dataset.set); return; }
       if (e.target.closest('[data-done]')) { commit(); closeSheet(); }
@@ -528,49 +549,50 @@
   function openDetail(id) {
     const c = S.contacts.get(id);
     if (!c) return;
+    const st = ST[c.status] || ST.new;
     const hist = [...(c.history || [])].reverse();
-    openSheet(`<h2>${esc(c.agency || c.owner || 'Contact')}</h2>
-      <p class="sub">${c.rank ? 'Rank #' + c.rank + ' · ' : ''}${esc(fmtPhone(c.phone))}</p>
-      <div class="detail-actions">
-        <a class="act call" href="${esc(telHref(c.phone))}" data-act="call" data-id="${esc(c.id)}">${I.phone}Call</a>
-        <a class="act wa" href="${esc(waHref(c))}" data-act="wa" data-id="${esc(c.id)}" target="_blank" rel="noopener">${I.chat}WhatsApp</a>
-      </div>
-      <div class="section-t">Status</div>
-      ${statusGridHtml(c.status)}
-      <div class="section-t">Details</div>
-      ${formHtml(c)}
-      <div class="btn-row" style="margin-top:1rem">
-        <button class="btn danger" data-del>Delete</button>
-        <button class="btn primary" data-savedetail>Save changes</button>
-      </div>
-      <div class="section-t">History</div>
-      <ul class="timeline">
-        ${c.callCount ? `<li>📞 Called ${c.callCount}× · last ${esc(stamp(c.lastCalledAt))}</li>` : ''}
-        ${hist.map((h) => `<li><span class="pill" style="--c:${ST[h.s]?.c || '#64748b'}">${esc(ST[h.s]?.label || h.s)}</span>${esc(stamp(h.at))}${h.by ? ' · ' + esc(h.by) : ''}</li>`).join('')}
-      </ul>`);
+    openSheet(`${sheetNav('', 'Close', 'Save', 'data-savedetail')}
+      <div class="sheet-pad">
+        <div class="hero">
+          <div class="avatar xl ${c.rank && c.rank <= 3 ? 'gold' : ''}">${c.rank ? '<span><small>#</small>' + c.rank + '</span>' : initials(c)}</div>
+          <h2>${esc(c.agency || c.owner || 'Contact')}</h2>
+          <p>${esc([c.agency ? c.owner : '', fmtPhone(c.phone)].filter(Boolean).join(' · '))}</p>
+        </div>
+        <div class="tiles">
+          <a class="tile call" href="${esc(telHref(c.phone))}" data-act="call" data-id="${esc(c.id)}">${I.phoneFill}<span>Call</span></a>
+          <a class="tile wa" href="${esc(waHref(c))}" data-act="wa" data-id="${esc(c.id)}" target="_blank" rel="noopener">${I.chatFill}<span>WhatsApp</span></a>
+          <button type="button" class="tile st" data-act="status" data-id="${esc(c.id)}" style="--c:${st.c}"><i class="sdot big"></i><span>${esc(st.label)}</span></button>
+        </div>
+        ${formHtml(c, false)}
+        <div class="group-head">Activity</div>
+        <div class="group">
+          ${c.callCount ? `<div class="cell static"><span class="grow">Called ${c.callCount}×</span><span class="dim">${esc(stamp(c.lastCalledAt))}</span></div>` : ''}
+          ${hist.map((h) => `<div class="cell static" style="--c:${ST[h.s]?.c || '#8e8e93'}"><i class="sdot"></i><span class="grow">${esc(ST[h.s]?.label || h.s)}${h.by ? ` <span class="dim">· ${esc(h.by)}</span>` : ''}</span><span class="dim">${esc(stamp(h.at))}</span></div>`).join('')}
+        </div>
+        <div class="group" style="margin-top:1.4rem"><button type="button" class="cell danger-cell" data-del>Delete Contact</button></div>
+      </div>`);
     const dup = wireDupCheck(c.id);
     $('#sheetBody').addEventListener('click', (e) => {
-      const b = e.target.closest('[data-set]');
-      if (b) {
-        setStatus(id, b.dataset.set);
-        $$('#sheetBody [data-set]').forEach((x) => x.classList.toggle('on', x === b));
-        return;
-      }
+      if (e.target.closest('[data-close]')) return closeSheet();
       if (e.target.closest('[data-savedetail]')) {
         const f = readForm();
         if (!f.phone || f.phone.replace(/\D/g, '').length < 6) { toast('Enter a valid phone number'); return; }
         if (dup()) { toast('That number belongs to another contact'); return; }
         const cur = S.contacts.get(id);
         const changes = {};
-        ['agency', 'owner', 'rank', 'phone', 'notes'].forEach((k) => { if ((cur[k] ?? null) !== (f[k] ?? null) && !(cur[k] == null && f[k] === '')) changes[k] = f[k]; });
+        ['agency', 'owner', 'rank', 'phone', 'notes'].forEach((k) => {
+          const a = cur[k] ?? '';
+          const b = f[k] ?? '';
+          if (String(a) !== String(b)) changes[k] = f[k];
+        });
         if (Object.keys(changes).length) patchContact(id, changes);
         closeSheet();
-        toast('Saved');
+        toast(Object.keys(changes).length ? 'Saved' : 'No changes');
         return;
       }
-      if (e.target.closest('[data-del]')) {
-        const btn = e.target.closest('[data-del]');
-        if (!btn.dataset.armed) { btn.dataset.armed = '1'; btn.textContent = 'Tap again to delete'; return; }
+      const del = e.target.closest('[data-del]');
+      if (del) {
+        if (!del.dataset.armed) { del.dataset.armed = '1'; del.textContent = 'Tap Again to Delete'; return; }
         const gone = deleteContact(id);
         closeSheet();
         toast('Contact deleted', 'Undo', () => {
@@ -988,7 +1010,11 @@
     $$('.view').forEach((v) => (v.hidden = v.id !== 'view-' + view));
     $$('.bottom [data-nav]').forEach((b) => b.classList.toggle('on', b.dataset.nav === view));
     $('#leadsBar').hidden = view !== 'leads';
-    $('#viewTitle').textContent = { leads: 'Leads', import: 'Import', settings: 'Settings' }[view];
+    const title = { leads: 'Leads', import: 'Import', settings: 'Settings' }[view];
+    $('#viewTitle').textContent = title;
+    $('#smallTitle').textContent = title;
+    $('#bigCount').hidden = view !== 'leads';
+    $('.top').classList.remove('scrolled');
     if (view === 'import') renderImport();
     if (view === 'settings') renderSettings();
     if (view === 'leads') { S.shown = PAGE; render(); }
@@ -1090,6 +1116,10 @@
     sh.addEventListener('touchstart', (e) => { y0 = sh.scrollTop <= 0 ? e.touches[0].clientY : null; }, { passive: true });
     sh.addEventListener('touchend', (e) => { if (y0 != null && e.changedTouches[0].clientY - y0 > 90) closeSheet(); y0 = null; }, { passive: true });
   })();
+
+  $('#main').addEventListener('scroll', () => {
+    $('.top').classList.toggle('scrolled', $('#main').scrollTop > 28);
+  }, { passive: true });
 
   let qTimer;
   $('#search').addEventListener('input', (e) => {

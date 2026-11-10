@@ -3,41 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0b1b33">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f7">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Opaque status bar: the translucent one makes iOS 26 home-screen apps stop short of the bottom edge. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Sky High">
+  <meta name="format-detection" content="telephone=no">
   <title>Sky High</title>
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-180.png">
   <link rel="stylesheet" href="/styles.css">
-  <script>
-    // iOS home-screen apps can report a viewport shorter than the screen, which leaves a gap
-    // under bottom bars. Size the app to the real screen instead.
-    (function () {
-      var standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
-      var d = document.documentElement;
-      if (standalone) d.classList.add('standalone');
-      function fit() {
-        var h = window.innerHeight;
-        if (standalone && navigator.standalone) {
-          var land = window.innerWidth > window.innerHeight;
-          var sh = land ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
-          if (sh - h > 0 && sh - h < 120) h = sh;
-        }
-        d.style.setProperty('--app-h', h + 'px');
-      }
-      fit();
-      window.addEventListener('orientationchange', function () { setTimeout(fit, 300); });
-      window.addEventListener('resize', function () {
-        // Ignore the keyboard opening; only refit on real size changes.
-        var a = document.activeElement;
-        if (!a || !/INPUT|TEXTAREA|SELECT/.test(a.tagName)) fit();
-      });
-    })();
-  </script>
 </head>
 <body>
   <!-- Sign in -->
@@ -45,10 +23,12 @@
     <form id="loginForm" class="login-card" autocomplete="on">
       <img src="/icon.svg" alt="" class="login-logo">
       <h1>Sky High</h1>
-      <p>Shared lead list. Enter the team password.</p>
-      <input id="loginPass" type="password" name="password" placeholder="Password" autocomplete="current-password" required>
-      <input id="loginName" type="text" placeholder="Your name (e.g. Ghufran)" autocomplete="nickname" maxlength="40">
-      <button class="btn primary block" type="submit">Sign in</button>
+      <p>Your shared lead list.</p>
+      <div class="group">
+        <label class="cell"><input id="loginName" type="text" placeholder="Your name" autocomplete="nickname" maxlength="40"></label>
+        <label class="cell"><input id="loginPass" type="password" name="password" placeholder="Team password" autocomplete="current-password" required></label>
+      </div>
+      <button class="btn primary block lg" type="submit">Sign In</button>
       <p id="loginErr" class="err" role="alert"></p>
     </form>
   </section>
@@ -56,27 +36,33 @@
   <!-- App -->
   <div id="app" hidden>
     <header class="top">
-      <div class="top-row">
-        <div class="brand">
-          <img src="/icon.svg" alt="" width="28" height="28">
-          <span id="viewTitle">Leads</span>
-          <button id="syncDot" class="sync-dot" type="button" aria-label="Sync status" title="Sync status"></button>
-        </div>
+      <div class="nav-row">
+        <button id="syncDot" class="sync" type="button" aria-label="Sync status"><i></i><span id="syncText">Synced</span></button>
+        <div id="smallTitle" class="small-title">Leads</div>
         <div class="zoom" role="group" aria-label="Text size">
-          <button type="button" data-zoom="-1" aria-label="Smaller text">A<sup>−</sup></button>
-          <button type="button" data-zoom="1" aria-label="Larger text">A<sup>+</sup></button>
+          <button type="button" data-zoom="-1" aria-label="Smaller text"><span class="a-sm">A</span></button>
+          <button type="button" data-zoom="1" aria-label="Larger text"><span class="a-lg">A</span></button>
         </div>
       </div>
+      <div class="large">
+        <h1 id="viewTitle">Leads</h1>
+        <span id="bigCount" class="big-count"></span>
+      </div>
       <div id="leadsBar" class="leads-bar">
-        <div class="search">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input id="search" type="search" placeholder="Search name or number" autocomplete="off" enterkeyhint="search">
-          <select id="sort" aria-label="Sort">
-            <option value="rank">Rank</option>
-            <option value="new">Newest</option>
-            <option value="updated">Updated</option>
-            <option value="az">A–Z</option>
-          </select>
+        <div class="search-row">
+          <label class="search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="search" type="search" placeholder="Search" autocomplete="off" enterkeyhint="search">
+          </label>
+          <label class="sort-btn" aria-label="Sort">
+            <svg viewBox="0 0 24 24"><path d="M7 4v16m0 0-3-3m3 3 3-3M17 20V4m0 0-3 3m3-3 3 3"/></svg>
+            <select id="sort">
+              <option value="rank">Sort by Rank</option>
+              <option value="new">Newest First</option>
+              <option value="updated">Recently Updated</option>
+              <option value="az">A–Z</option>
+            </select>
+          </label>
         </div>
         <div id="chips" class="chips" role="tablist" aria-label="Filter by status"></div>
       </div>
@@ -93,13 +79,13 @@
 
     <nav class="bottom" aria-label="Main">
       <button type="button" data-nav="leads" class="on">
-        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Leads</span>
+        <svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" class="dotfill"/><circle cx="4.5" cy="12" r="1.2" class="dotfill"/><circle cx="4.5" cy="18" r="1.2" class="dotfill"/></svg><span>Leads</span>
       </button>
-      <button type="button" data-nav="add" class="add-btn" aria-label="Add contact">
-        <span class="plus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Add</span>
+      <button type="button" data-nav="add">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 8v8M8 12h8"/></svg><span>Add</span>
       </button>
       <button type="button" data-nav="import">
-        <svg viewBox="0 0 24 24"><path d="M12 15V3m0 0-4 4m4-4 4 4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg><span>Import</span>
+        <svg viewBox="0 0 24 24"><path d="M12 15V4m0 0-4 4m4-4 4 4"/><path d="M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg><span>Import</span>
       </button>
       <button type="button" data-nav="settings">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Settings</span>
@@ -107,7 +93,7 @@
     </nav>
   </div>
 
-  <!-- Overlay layer (sheets, toasts) sized to the real screen -->
+  <!-- Overlay layer (sheets, toasts) -->
   <div class="layer">
     <div id="scrim" class="scrim" hidden></div>
     <div id="sheet" class="sheet" role="dialog" aria-modal="true" hidden>
