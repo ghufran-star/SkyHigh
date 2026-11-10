@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1b33">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sky High">
+  <title>Sky High</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon-180.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Sign in -->
+  <section id="login" class="login" hidden>
+    <form id="loginForm" class="login-card" autocomplete="on">
+      <img src="/icon.svg" alt="" class="login-logo">
+      <h1>Sky High</h1>
+      <p>Shared lead list. Enter the team password.</p>
+      <input id="loginPass" type="password" name="password" placeholder="Password" autocomplete="current-password" required>
+      <input id="loginName" type="text" placeholder="Your name (e.g. Ghufran)" autocomplete="nickname" maxlength="40">
+      <button class="btn primary block" type="submit">Sign in</button>
+      <p id="loginErr" class="err" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- App -->
+  <div id="app" hidden>
+    <header class="top">
+      <div class="top-row">
+        <div class="brand">
+          <img src="/icon.svg" alt="" width="28" height="28">
+          <span id="viewTitle">Leads</span>
+          <button id="syncDot" class="sync-dot" type="button" aria-label="Sync status" title="Sync status"></button>
+        </div>
+        <div class="zoom" role="group" aria-label="Text size">
+          <button type="button" data-zoom="-1" aria-label="Smaller text">A<sup>−</sup></button>
+          <button type="button" data-zoom="1" aria-label="Larger text">A<sup>+</sup></button>
+        </div>
+      </div>
+      <div id="leadsBar" class="leads-bar">
+        <div class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="search" type="search" placeholder="Search name or number" autocomplete="off" enterkeyhint="search">
+          <select id="sort" aria-label="Sort">
+            <option value="rank">Rank</option>
+            <option value="new">Newest</option>
+            <option value="updated">Updated</option>
+            <option value="az">A–Z</option>
+          </select>
+        </div>
+        <div id="chips" class="chips" role="tablist" aria-label="Filter by status"></div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section id="view-leads" class="view">
+        <div id="list" class="list"></div>
+        <div id="more" class="more"></div>
+      </section>
+      <section id="view-import" class="view" hidden></section>
+      <section id="view-settings" class="view" hidden></section>
+    </main>
+
+    <nav class="bottom" aria-label="Main">
+      <button type="button" data-nav="leads" class="on">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Leads</span>
+      </button>
+      <button type="button" data-nav="add" class="add-btn" aria-label="Add contact">
+        <span class="plus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Add</span>
+      </button>
+      <button type="button" data-nav="import">
+        <svg viewBox="0 0 24 24"><path d="M12 15V3m0 0-4 4m4-4 4 4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg><span>Import</span>
+      </button>
+      <button type="button" data-nav="settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Settings</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Bottom sheet (add / edit / status) -->
+  <div id="scrim" class="scrim" hidden></div>
+  <div id="sheet" class="sheet" role="dialog" aria-modal="true" hidden>
+    <div class="grab" aria-hidden="true"></div>
+    <div id="sheetBody"></div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
