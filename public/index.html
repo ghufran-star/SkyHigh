@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b1b33">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -13,6 +13,31 @@
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-180.png">
   <link rel="stylesheet" href="/styles.css">
+  <script>
+    // iOS home-screen apps can report a viewport shorter than the screen, which leaves a gap
+    // under bottom bars. Size the app to the real screen instead.
+    (function () {
+      var standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+      var d = document.documentElement;
+      if (standalone) d.classList.add('standalone');
+      function fit() {
+        var h = window.innerHeight;
+        if (standalone && navigator.standalone) {
+          var land = window.innerWidth > window.innerHeight;
+          var sh = land ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+          if (sh - h > 0 && sh - h < 120) h = sh;
+        }
+        d.style.setProperty('--app-h', h + 'px');
+      }
+      fit();
+      window.addEventListener('orientationchange', function () { setTimeout(fit, 300); });
+      window.addEventListener('resize', function () {
+        // Ignore the keyboard opening; only refit on real size changes.
+        var a = document.activeElement;
+        if (!a || !/INPUT|TEXTAREA|SELECT/.test(a.tagName)) fit();
+      });
+    })();
+  </script>
 </head>
 <body>
   <!-- Sign in -->
@@ -82,14 +107,15 @@
     </nav>
   </div>
 
-  <!-- Bottom sheet (add / edit / status) -->
-  <div id="scrim" class="scrim" hidden></div>
-  <div id="sheet" class="sheet" role="dialog" aria-modal="true" hidden>
-    <div class="grab" aria-hidden="true"></div>
-    <div id="sheetBody"></div>
+  <!-- Overlay layer (sheets, toasts) sized to the real screen -->
+  <div class="layer">
+    <div id="scrim" class="scrim" hidden></div>
+    <div id="sheet" class="sheet" role="dialog" aria-modal="true" hidden>
+      <div class="grab" aria-hidden="true"></div>
+      <div id="sheetBody"></div>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   </div>
-
-  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="/app.js"></script>
 </body>

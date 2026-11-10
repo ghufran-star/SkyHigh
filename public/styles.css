@@ -36,15 +36,25 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html { font-size: calc(16px * var(--z)); -webkit-text-size-adjust: 100%; }
+html { font-size: calc(16px * var(--z)); -webkit-text-size-adjust: 100%; height: 100%; overflow: hidden; background: var(--head); touch-action: pan-x pan-y; }
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
   font: 400 1rem/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Inter, sans-serif;
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
+  height: 100%; overflow: hidden;
+  -webkit-user-select: none; user-select: none;
+  -webkit-font-smoothing: antialiased;
 }
+input, textarea, [contenteditable] { -webkit-user-select: text; user-select: text; }
+a, button, img { -webkit-touch-callout: none; touch-action: manipulation; }
+img { -webkit-user-drag: none; }
+
+/* ---------- App shell: fixed header + tab bar, only the content scrolls ---------- */
+#app { position: fixed; top: 0; left: 0; right: 0; height: var(--app-h, 100dvh); display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
 [hidden] { display: none !important; }
+.view { animation: fade .18s ease; }
 button, input, select, textarea { font: inherit; color: inherit; }
 /* iOS zooms into inputs under 16px — keep them at 16px minimum. */
 input, select, textarea { font-size: max(16px, 1rem); }
@@ -65,7 +75,7 @@ svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-
 .btn[disabled] { opacity: .5; pointer-events: none; }
 
 /* ---------- Login ---------- */
-.login { min-height: 100dvh; display: grid; place-items: center; padding: 1.25rem;
+.login { position: fixed; top: 0; left: 0; right: 0; height: var(--app-h, 100dvh); overflow-y: auto; display: grid; place-items: center; padding: 1.25rem;
   background: radial-gradient(120% 80% at 50% 0%, #1d4f9a 0%, #0b1b33 60%); }
 .login-card { width: 100%; max-width: 22rem; background: var(--surface); border-radius: 1.25rem; padding: 1.75rem 1.25rem; display: grid; gap: .75rem; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
 .login-card h1 { margin: 0; font-size: 1.5rem; }
@@ -75,7 +85,7 @@ svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-
 
 /* ---------- Header (sticky) ---------- */
 .top {
-  position: sticky; top: 0; z-index: 20;
+  position: relative; z-index: 2; flex: none;
   background: var(--head); color: var(--head-ink);
   padding: calc(var(--safe-t) + .5rem) 1rem .6rem;
   box-shadow: 0 2px 12px rgba(0,0,0,.18);
@@ -108,8 +118,8 @@ svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-
 .chip.on { background: #fff; color: var(--head); border-color: #fff; }
 
 /* ---------- Main / list ---------- */
-#impStage { scroll-margin-top: 4.5rem; }
-main { padding: .85rem .85rem calc(5.5rem + var(--safe-b)); max-width: 46rem; margin: 0 auto; }
+#impStage { scroll-margin-top: .5rem; }
+main { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; padding: .85rem max(.85rem, calc((100% - 46rem) / 2)) 1.5rem; }
 .list { display: grid; gap: .7rem; }
 .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--line); overflow: hidden; }
 .card-main { display: grid; grid-template-columns: auto 1fr auto; gap: .75rem; align-items: start; padding: .85rem .85rem .6rem; cursor: pointer; }
@@ -131,13 +141,15 @@ main { padding: .85rem .85rem calc(5.5rem + var(--safe-b)); max-width: 46rem; ma
 .meta { display: flex; flex-wrap: wrap; gap: .25rem .75rem; padding: .5rem .85rem; border-top: 1px solid var(--line); font-size: .78rem; color: var(--ink-3); }
 .more { text-align: center; color: var(--ink-3); padding: 1rem; font-size: .9rem; }
 .empty { text-align: center; padding: 3rem 1rem; color: var(--ink-2); }
+.empty-ico { width: 4rem; height: 4rem; margin: 0 auto; border-radius: 1.2rem; display: grid; place-items: center; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.empty-ico svg { width: 2rem; height: 2rem; }
 .empty h2 { color: var(--ink); margin: .5rem 0; font-size: 1.2rem; }
 .empty .btn { margin-top: 1rem; }
 mark { background: #fff3a3; color: inherit; border-radius: .2rem; }
 
 /* ---------- Bottom nav (fixed) ---------- */
 .bottom {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  position: relative; z-index: 2; flex: none;
   display: grid; grid-template-columns: repeat(4, 1fr);
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   -webkit-backdrop-filter: saturate(160%) blur(14px); backdrop-filter: saturate(160%) blur(14px);
@@ -151,10 +163,12 @@ mark { background: #fff3a3; color: inherit; border-radius: .2rem; }
 .add-btn .plus svg { width: 1.3rem; height: 1.3rem; stroke-width: 2.6; }
 
 /* ---------- Sheet ---------- */
-.scrim { position: fixed; inset: 0; background: rgba(5, 12, 24, .5); z-index: 40; animation: fade .18s ease; }
+.layer { position: fixed; top: 0; left: 0; right: 0; height: var(--app-h, 100dvh); pointer-events: none; z-index: 40; }
+.layer > * { pointer-events: auto; }
+.scrim { position: absolute; inset: 0; background: rgba(5, 12, 24, .5); z-index: 40; animation: fade .18s ease; }
 .sheet {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
-  max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain;
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 41;
+  max-height: calc(var(--app-h, 100dvh) - var(--safe-t) - 1rem); overflow-y: auto; overscroll-behavior: contain;
   background: var(--surface); border-radius: 1.25rem 1.25rem 0 0;
   padding: .4rem 1rem calc(1rem + var(--safe-b));
   max-width: 40rem; margin: 0 auto;
@@ -227,7 +241,7 @@ td.skip { color: var(--ink-3); text-decoration: line-through; }
 
 /* ---------- Toast ---------- */
 .toast {
-  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(5.3rem + var(--safe-b)); z-index: 60;
+  position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(5.3rem + var(--safe-b)); z-index: 60;
   background: #0b1b33; color: #fff; border-radius: .85rem; padding: .7rem .8rem .7rem 1rem;
   display: flex; align-items: center; gap: .8rem; max-width: calc(100% - 2rem); width: max-content;
   box-shadow: 0 10px 30px rgba(0,0,0,.3); font-size: .92rem; animation: pop .2s ease;
