@@ -46,11 +46,12 @@
 html {
   font-size: calc(17px * var(--z));
   -webkit-text-size-adjust: 100%;
-  height: 100%; overflow: hidden; background: var(--bg);
+  background: var(--bg);
+  overscroll-behavior: none;
   touch-action: pan-x pan-y;
 }
 body {
-  margin: 0; height: 100%; overflow: hidden;
+  margin: 0;
   background: var(--bg); color: var(--label);
   font: 400 1rem/1.3 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
   letter-spacing: -.01em;
@@ -347,3 +348,11 @@ html.gap .bottom { background: var(--bar-solid); -webkit-backdrop-filter: none; 
 html.gap .toast { bottom: 4.6rem; }
 html.gap .sheet { padding-bottom: 1.25rem; }
 html.gap.sheet-open:has(#app:not([hidden])) { background: var(--bg); }
+
+/* iOS 26 cuts a status-bar-height off a home-screen app whose page is shorter than the screen
+   (WebKit bug 301108). Every screen here is a fixed layer, so give the page exactly screen height.
+   The min() cap stops it scrolling if the status bar is ever opaque. */
+html.standalone { min-height: min(100lvh, calc(100% + env(safe-area-inset-top))); }
+@media (display-mode: standalone) {
+  html { min-height: min(100lvh, calc(100% + env(safe-area-inset-top))); }
+}

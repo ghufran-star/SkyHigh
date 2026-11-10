@@ -7,8 +7,7 @@
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <!-- Opaque status bar: the translucent one makes iOS 26 home-screen apps stop short of the bottom edge. -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Sky High">
   <meta name="format-detection" content="telephone=no">
   <title>Sky High</title>
@@ -21,6 +20,7 @@
     // When that happens, paint the leftover strip in the tab bar's colour so the bar reaches the edge.
     (function () {
       var d = document.documentElement;
+      if (navigator.standalone || matchMedia('(display-mode: standalone)').matches) d.classList.add('standalone');
       function check() {
         if (!navigator.standalone) return;
         var portrait = window.innerHeight >= window.innerWidth;
